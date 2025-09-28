@@ -3,3 +3,22 @@
 {% block content %}
     <h1 class="text-3xl font-bold underline">FastAPI App</h1>
 {% endblock %}
+
+{% block scripts %}
+    <script>
+async function loadDashboard() {
+    let fraud = await fetch("/api/fraud_summary").then(res => res.json());
+    document.getElementById("fraud-count").innerText = fraud.fraud_alerts;
+
+    let delays = await fetch("/api/delays_summary").then(res => res.json());
+    document.getElementById("delay-count").innerText = delays.total_delays;
+}
+window.onload = loadDashboard;
+</script>
+
+<div>
+  <h1>AI-Powered Supply Chain Insights</h1>
+  <div>Fraud Alerts: <span id="fraud-count"></span></div>
+  <div>Delays: <span id="delay-count"></span></div>
+</div>
+{% endblock %}
