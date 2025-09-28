@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from anomaly_detection.model import detect_triangle
@@ -80,12 +80,43 @@ async def websocket_endpoint(websocket: WebSocket):
 
         await asyncio.sleep(1/60)  # ~60 FPS
 
-@app.get("/industrial-predictions")
-def industrial_predictions():
+@app.get("/rl", response_class=HTMLResponse)
+def rl_page(request: Request):
+    return templates.TemplateResponse("rl.html", {"request": request, "title": "Train RL Factory Model"})
+
+@app.post("/train-rl-model")
+def train_rl_model(params: dict):
+    from factory_sim.handle import train_and_evaluate_factory
     """
-    returns machine failure predictions
+    Accepts JSON with optional keys:
+    total_timesteps, learning_rate, n_steps, batch_size, gamma, max_material_rate, target_throughput
     """
-    return train_model_and_get_predictions()
+    global optimal_rl_config
+    total_timesteps = params.get("total_timesteps", 5000)
+    learning_rate = params.get("learning_rate", 0.001)
+    n_steps = params.get("n_steps", 128)
+    batch_size = params.get("batch_size", 64)
+    gamma = params.get("gamma", 0.99)
+    max_material_rate = params.get("max_material_rate", 5)
+    target_throughput = params.get("target_throughput", 50)
+
+    # Train the model and get optimal configuration
+    best_action, final_state = train_and_evaluate_factory(
+        total_timesteps=total_timesteps,
+        learning_rate=learning_rate,
+        n_steps=n_steps,
+        batch_size=batch_size,
+        gamma=gamma,
+        max_material_rate=max_material_rate,
+        target_throughput=target_throughput,
+        eval_steps=50,
+        render=False,
+    )
+    
+    # Store globally
+    optimal_rl_config = {"best_action": best_action, "final_state": final_state}
+
+    return JSONResponse(optimal_rl_config)
 
 @app.get("/fraud-predictions")
 def fraud_predictions():
