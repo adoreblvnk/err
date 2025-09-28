@@ -2,60 +2,79 @@
 
 {% block content %}
 <div class="container mx-auto px-4 py-8">
-    <h1 class="text-4xl font-bold text-gray-800 text-center mb-4">{{ title }}</h1>
-    <div class="bg-white shadow-lg rounded-lg overflow-hidden">
-        <div class="p-4">
-            <div class="relative">
-                <img id="camera-feed" src="" alt="Camera Feed" class="w-full h-auto bg-gray-200 rounded">
-                <div id="status-indicator" class="absolute top-4 left-4 px-3 py-1 rounded-full text-white font-semibold text-sm">
-                    Connecting...
-                </div>
-            </div>
+    <h1 class="text-4xl font-bold text-gray-800 text-center mb-6">{{ title }}</h1>
+
+    <!-- Camera feed container -->
+    <div class="relative w-full max-w-4xl mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
+        <img id="camera-feed" src="" alt="Camera Feed" 
+             class="w-full h-auto rounded shadow-lg"
+             style="max-height: 600px;"> <!-- Adjust max-height as needed -->
+
+        <!-- Status indicator -->
+        <div id="status-indicator" class="absolute top-4 left-4 px-3 py-1 rounded-full text-white font-semibold text-sm bg-gray-500">
+            Connecting...
         </div>
     </div>
+
+    <!-- Anomaly count display -->
+    <div id="anomaly-count" class="mt-4 text-lg font-semibold text-center text-gray-700">
+        No anomalies detected
+    </div>
+
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const feed = document.getElementById("camera-feed");
-        const statusIndicator = document.getElementById("status-indicator");
-        const anomalyAlert = document.getElementById("anomaly-alert");
-        
-        const ws = new WebSocket("ws://" + location.host + "/ws/camera_feed");
+document.addEventListener("DOMContentLoaded", function() {
+    const feed = document.getElementById("camera-feed");
+    const statusIndicator = document.getElementById("status-indicator");
+    const anomalyCountElem = document.getElementById("anomaly-count");
+    const anomalyAlert = document.getElementById("anomaly-alert");
 
-        ws.onopen = function() {
-            console.log("WebSocket connection established");
-            statusIndicator.textContent = "Connected";
-            statusIndicator.classList.add("bg-green-500");
-        };
+    const ws = new WebSocket("ws://" + location.host + "/ws/camera_feed");
 
-        ws.onmessage = function(event) {
-            const data = JSON.parse(event.data);
-            feed.src = "data:image/jpeg;base64," + data.frame;
+    ws.onopen = function() {
+        console.log("WebSocket connected");
+        statusIndicator.textContent = "Connected";
+        statusIndicator.classList.remove("bg-gray-500");
+        statusIndicator.classList.add("bg-green-500");
+    };
 
-            if (data.anomaly) {
-                anomalyAlert.classList.remove("hidden");
-                setTimeout(() => {
-                    anomalyAlert.classList.add("hidden");
-                }, 1000); // Show alert for 1 second
-            }
-        };
+    ws.onmessage = function(event) {
+        const data = JSON.parse(event.data);
 
-        ws.onclose = function() {
-            console.log("WebSocket connection closed");
-            statusIndicator.textContent = "Disconnected";
-            statusIndicator.classList.remove("bg-green-500");
-            statusIndicator.classList.add("bg-red-500");
-        };
+        // Update camera feed
+        feed.src = "data:image/jpeg;base64," + data.frame;
 
-        ws.onerror = function(error) {
-            console.error("WebSocket error:", error);
-            statusIndicator.textContent = "Error";
-            statusIndicator.classList.remove("bg-green-500");
-            statusIndicator.classList.add("bg-red-500");
-        };
-    });
+        // Update total anomalies
+        if (data.total_anomalies > 0) {
+            anomalyCountElem.textContent = `Total anomalies detected: ${data.total_anomalies}`;
+        } else {
+            anomalyCountElem.textContent = "No anomalies detected";
+        }
+
+        // Flash alert if new anomalies detected this frame
+        if (data.anomaly && data.count > 0) {
+            anomalyAlert.textContent = `New anomaly detected! (+${data.count})`;
+            anomalyAlert.classList.remove("hidden");
+            setTimeout(() => anomalyAlert.classList.add("hidden"), 1000);
+        }
+    };
+
+    ws.onclose = function() {
+        console.log("WebSocket closed");
+        statusIndicator.textContent = "Disconnected";
+        statusIndicator.classList.remove("bg-green-500");
+        statusIndicator.classList.add("bg-red-500");
+    };
+
+    ws.onerror = function(error) {
+        console.error("WebSocket error:", error);
+        statusIndicator.textContent = "Error";
+        statusIndicator.classList.remove("bg-green-500");
+        statusIndicator.classList.add("bg-red-500");
+    };
+});
 </script>
 {% endblock %}
