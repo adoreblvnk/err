@@ -39,6 +39,15 @@
             </div>
         </div>
 
+        <!-- Section 2.5: Model Hyperparameters -->
+        <div class="mb-16 animate-fade-in-up" style="animation-delay: 0.5s;">
+            <h2 class="text-3xl font-bold mb-2 text-teal-300">2.5 Model Hyperparameters: What's under the hood?</h2>
+            <p class="text-gray-400 mb-8">The model's performance is optimized by tuning its hyperparameters. Here are the best settings found through automated experimentation.</p>
+            <div id="best-params" class="grid grid-cols-2 md:grid-cols-3 gap-6 text-center">
+                <!-- Best parameters will be injected here -->
+            </div>
+        </div>
+
         <!-- Section 3: The Proof -->
         <div class="animate-fade-in-up" style="animation-delay: 0.6s;">
             <h2 class="text-3xl font-bold mb-2 text-teal-300">3. The Proof: How reliable is our model?</h2>
@@ -93,6 +102,19 @@ document.addEventListener('DOMContentLoaded', function() {
                             <div class="text-teal-400 font-bold text-lg">${key.replace(/_/g, ' ')}</div>
                             <div class="text-3xl font-semibold">${data.summary_stats.mean[key].toFixed(2)}</div>
                             <div class="text-sm text-gray-500">Average</div>
+                        </div>`;
+                });
+            }
+
+            // --- 1.5. Best Parameters ---
+            const paramsContainer = document.getElementById('best-params');
+            if (data.best_params) {
+                Object.keys(data.best_params).forEach(key => {
+                    paramsContainer.innerHTML += `
+                        <div class="bg-gray-800 p-4 rounded-lg transform hover:scale-105 transition-transform duration-300">
+                            <div class="text-teal-400 font-bold text-lg">${key.replace(/_/g, ' ')}</div>
+                            <div class="text-3xl font-semibold">${data.best_params[key]}</div>
+                            <div class="text-sm text-gray-500">Optimal Setting</div>
                         </div>`;
                 });
             }

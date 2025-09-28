@@ -1,5 +1,5 @@
 import pandas as pd
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import classification_report, confusion_matrix
 import xgboost as xgb
 import numpy as np
@@ -34,13 +34,28 @@ def train_model_and_get_predictions():
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=42, stratify=y
     )
+
+    # Define the parameter grid for GridSearchCV
+    param_grid = {
+        'n_estimators': [100, 200],
+        'max_depth': [3, 5, 7],
+        'learning_rate': [0.05, 0.1]
+    }
+
+    # Initialize the XGBClassifier
     model = xgb.XGBClassifier(
         objective="binary:logistic",
         eval_metric="logloss",
         use_label_encoder=False
     )
-    model.fit(X_train, y_train)
-    y_pred = model.predict(X_test)
+
+    # Set up GridSearchCV
+    grid_search = GridSearchCV(estimator=model, param_grid=param_grid, cv=3, scoring='accuracy', n_jobs=-1)
+    grid_search.fit(X_train, y_train)
+
+    # Get the best model
+    best_model = grid_search.best_estimator_
+    y_pred = best_model.predict(X_test)
 
     # --- Analysis ---
     # 1. Evaluation Metrics
@@ -48,7 +63,7 @@ def train_model_and_get_predictions():
     cr = classification_report(y_test, y_pred, output_dict=True)
 
     # 2. Feature Importance
-    feature_importance = model.get_booster().get_score(importance_type='weight')
+    feature_importance = best_model.get_booster().get_score(importance_type='weight')
     sorted_importance = sorted(feature_importance.items(), key=lambda x: x[1], reverse=True)
 
     # 3. Correlation with Target (calculated on the clean analysis_df)
@@ -58,6 +73,7 @@ def train_model_and_get_predictions():
     summary_stats = X.describe().to_dict()
 
     return {
+        "best_params": grid_search.best_params_,
         "confusion_matrix": cm.tolist(),
         "classification_report": cr,
         "feature_importance": dict(sorted_importance),
