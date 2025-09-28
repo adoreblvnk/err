@@ -23,3 +23,6 @@ uvicorn==0.37.0
 uvloop==0.21.0 ; platform_python_implementation != 'PyPy' and sys_platform != 'cygwin' and sys_platform != 'win32'
 watchfiles==1.1.0
 websockets==15.0.1
+pandas
+scikit-learn
+xgboost
