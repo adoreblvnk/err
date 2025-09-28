@@ -51,21 +51,29 @@ def industrial_page(request: Request):
 @app.websocket("/ws/camera_feed")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
+    total_anomalies = 0
+
     while True:
         if not frame_queue.empty():
             frame_bytes = frame_queue.get_nowait()
 
-            # Use triangle detection
-            anomaly_detected, bbox_coords, processed_frame = detect_triangle(frame_bytes)
+            # Detect triangles with persistent IDs
+            anomaly_detected, new_anomalies, bbox_coords, processed_frame = detect_triangle(frame_bytes)
 
-            # Encode to base64 for frontend
+            # Update total anomalies
+            if new_anomalies > 0:
+                total_anomalies += new_anomalies
+
             frame_base64 = base64.b64encode(processed_frame).decode("utf-8")
 
             await websocket.send_json({
                 "frame": frame_base64,
                 "anomaly": anomaly_detected,
-                "bboxes": bbox_coords
+                "count": new_anomalies,        # new anomalies in this frame
+                "bboxes": bbox_coords,
+                "total_anomalies": total_anomalies
             })
+
         await asyncio.sleep(1/60)  # ~60 FPS
 
 @app.get("/industrial-predictions")
