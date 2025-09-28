@@ -19,10 +19,12 @@ model = PPO(
 )
 
 # Train the agent
-model.learn(total_timesteps=50000)
+#model.learn(total_timesteps=50000)
 
 # Save model
-model.save("ppo_factory")
+#model.save("ppo_factory")
+
+model = PPO.load("ppo_factory", env=env)
 
 # Test the trained agent
 obs = env.reset()
