@@ -10,7 +10,7 @@ import subprocess
 import sys
 import os
 
-from anomaly_detection.model import is_anomaly
+from anomaly_detection.model import detect_triangle
 from camera_feed.camera_receiver import run_listener
 
 app = FastAPI()
@@ -46,29 +46,22 @@ def camera_page(request: Request):
 @app.websocket("/ws/camera_feed")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
-    try:
-        while True:
-            if not frame_queue.empty():
-                frame_bytes = frame_queue.get_nowait()
-                
-                # --- Anomaly Detection ---
-                anomaly_detected = is_anomaly(frame_bytes)
-                # -------------------------
+    while True:
+        if not frame_queue.empty():
+            frame_bytes = frame_queue.get_nowait()
 
-                frame_base64 = base64.b64encode(frame_bytes).decode("utf-8")
-                
-                await websocket.send_json({
-                    "frame": frame_base64,
-                    "anomaly": anomaly_detected
-                })
-            await asyncio.sleep(1/60) # ~60fps
-            
-    except WebSocketDisconnect:
-        print("Client disconnected")
-    except Exception as e:
-        print(f"Error in websocket: {e}")
-    finally:
-        await websocket.close()
+            # Use triangle detection
+            anomaly_detected, bbox_coords, processed_frame = detect_triangle(frame_bytes)
+
+            # Encode to base64 for frontend
+            frame_base64 = base64.b64encode(processed_frame).decode("utf-8")
+
+            await websocket.send_json({
+                "frame": frame_base64,
+                "anomaly": anomaly_detected,
+                "bboxes": bbox_coords
+            })
+        await asyncio.sleep(1/60)  # ~60 FPS
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)

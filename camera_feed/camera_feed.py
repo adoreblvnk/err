@@ -14,7 +14,7 @@ def generate_synthetic_jpeg_bytes(width=320, height=240, frame_num=0):
     # Conveyor belt background
     belt_height = height // 3
     belt_y = height // 2 - belt_height // 2
-    draw.rectangle([0, belt_y, width, belt_y + belt_height], fill=(60, 60, 60))
+    draw.rectangle([0, belt_y, width, belt_y + belt_height], fill=(255, 255, 255))
 
     # Fixed seed for reproducibility of objects across frames
     random.seed(42)
