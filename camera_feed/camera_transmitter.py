@@ -100,10 +100,10 @@ def run_sender(dest, port, bind_host, bind_port, fps, mtu, frames_dir, loop, syn
                 frame_bytes = generate_synthetic_jpeg_bytes(synth_size[0], synth_size[1], frame_seq)
 
             total_chunks = chunk_and_send(sock, addr, frame_bytes, frame_seq, mtu)
-            print(f"Sent frame {frame_seq} as {total_chunks} chunks ({len(frame_bytes)} bytes) -> {dest}:{port}")
+            #print(f"Sent frame {frame_seq} as {total_chunks} chunks ({len(frame_bytes)} bytes) -> {dest}:{port}")
             frame_seq += 1
             if not loop and use_frames and frame_seq >= len(frame_paths):
-                print("Finished sending all frames (no-loop); exiting.")
+                #print("Finished sending all frames (no-loop); exiting.")
                 break
             # sleep to maintain fps
             t_elapsed = time.time() - t_start
