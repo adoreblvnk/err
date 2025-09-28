@@ -3,11 +3,7 @@
 cctv_udp_listener.py
 
 Listener for the CCTV UDP simulator stream.
-Receives UDP packets, reassembles frames, and displays them like a video.
-
-Usage:
-  python3 cctv_udp_listener.py --port 7000 --display
-  python3 cctv_udp_listener.py --port 7000 --out-dir ./frames
+Receives UDP packets, reassembles frames, and passes them to a queue.
 """
 
 import argparse
@@ -17,9 +13,7 @@ import struct
 import time
 import sys
 from collections import defaultdict
-
-import cv2
-import numpy as np
+import queue
 
 MAGIC = b"CCTV"
 HEADER_FMT = "!4sIHHd"
@@ -43,7 +37,7 @@ class FrameBuffer:
     def assemble(self):
         return b"".join(self.chunks[i] for i in range(self.total_chunks))
 
-def run_listener(port, bind_host, out_dir, display):
+def run_listener(port: int, bind_host: str, frame_queue: queue.Queue):
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind((bind_host, port))
     print(f"Listening on {bind_host}:{port}")
@@ -69,29 +63,13 @@ def run_listener(port, bind_host, out_dir, display):
 
             if fb.is_complete():
                 frame_bytes = fb.assemble()
-                print(f"Received frame {frame_seq} ({len(frame_bytes)} bytes) from {addr}")
-
-                # Save to disk if requested
-                if out_dir:
-                    os.makedirs(out_dir, exist_ok=True)
-                    fname = os.path.join(out_dir, f"frame_{frame_seq:06d}.jpg")
-                    with open(fname, "wb") as f:
-                        f.write(frame_bytes)
-
-                # Display with OpenCV if requested
-                if display:
-                    arr = np.frombuffer(frame_bytes, dtype=np.uint8)
-                    img = cv2.imdecode(arr, cv2.IMREAD_COLOR)
-                    if img is not None:
-                        cv2.imshow("CCTV Stream", img)
-                        if cv2.waitKey(1) & 0xFF == ord("q"):
-                            print("Exiting viewer.")
-                            break
-
-                # cleanup
+                try:
+                    frame_queue.put_nowait(frame_bytes)
+                except queue.Full:
+                    # If the queue is full, drop the frame to avoid blocking
+                    pass
                 del frames[frame_seq]
 
-            # periodic cleanup of stale frames
             if time.time() - last_cleanup > 5:
                 cutoff = time.time() - 10
                 to_delete = [
@@ -108,18 +86,17 @@ def run_listener(port, bind_host, out_dir, display):
         except Exception as e:
             print("Error:", e, file=sys.stderr)
 
-    if display:
-        cv2.destroyAllWindows()
-
-def parse_args():
+def main():
     p = argparse.ArgumentParser(description="CCTV UDP datastream listener.")
     p.add_argument("--port", type=int, required=True, help="UDP port to listen on.")
     p.add_argument("--bind-host", default="", help="Local bind host (default all).")
-    p.add_argument("--out-dir", default=None, help="Directory to save frames as files.")
-    p.add_argument("--display", action="store_true", help="Display frames as video (requires OpenCV).")
-    return p.parse_args()
+    args = p.parse_args()
+    
+    # This part is for standalone execution, which we are not using in the app
+    q = queue.Queue(maxsize=10)
+    run_listener(args.port, args.bind_host, q)
 
 if __name__ == "__main__":
-    args = parse_args()
-    run_listener(args.port, args.bind_host, args.out_dir, args.display)
+    main()
+
 

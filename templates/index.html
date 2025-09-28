@@ -1,24 +1,13 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h1 class="text-3xl font-bold underline">FastAPI App</h1>
-{% endblock %}
-
-{% block scripts %}
-    <script>
-async function loadDashboard() {
-    let fraud = await fetch("/api/fraud_summary").then(res => res.json());
-    document.getElementById("fraud-count").innerText = fraud.fraud_alerts;
-
-    let delays = await fetch("/api/delays_summary").then(res => res.json());
-    document.getElementById("delay-count").innerText = delays.total_delays;
-}
-window.onload = loadDashboard;
-</script>
-
-<div>
-  <h1>AI-Powered Supply Chain Insights</h1>
-  <div>Fraud Alerts: <span id="fraud-count"></span></div>
-  <div>Delays: <span id="delay-count"></span></div>
+<div class="container mx-auto px-4 py-8 text-center">
+    <h1 class="text-5xl font-bold text-gray-800 mb-4">Welcome to the Supply Chain Anomaly Detection Platform</h1>
+    <p class="text-xl text-gray-600 mb-8">
+        Using AI-driven analytics to identify fraud, delays, and inefficiencies in real-time.
+    </p>
+    <a href="/camera" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-full text-lg transition duration-300">
+        Go to Live Camera Feed
+    </a>
 </div>
 {% endblock %}

@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-4xl font-bold text-gray-800 text-center mb-4">{{ title }}</h1>
+    <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+        <div class="p-4">
+            <div class="relative">
+                <img id="camera-feed" src="" alt="Camera Feed" class="w-full h-auto bg-gray-200 rounded">
+                <div id="status-indicator" class="absolute top-4 left-4 px-3 py-1 rounded-full text-white font-semibold text-sm">
+                    Connecting...
+                </div>
+                <div id="anomaly-alert" class="hidden absolute inset-0 bg-red-500 bg-opacity-50 flex items-center justify-center">
+                    <div class="text-white text-4xl font-bold">ANOMALY DETECTED!</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const feed = document.getElementById("camera-feed");
+        const statusIndicator = document.getElementById("status-indicator");
+        const anomalyAlert = document.getElementById("anomaly-alert");
+        
+        const ws = new WebSocket("ws://" + location.host + "/ws/camera_feed");
+
+        ws.onopen = function() {
+            console.log("WebSocket connection established");
+            statusIndicator.textContent = "Connected";
+            statusIndicator.classList.add("bg-green-500");
+        };
+
+        ws.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            feed.src = "data:image/jpeg;base64," + data.frame;
+
+            if (data.anomaly) {
+                anomalyAlert.classList.remove("hidden");
+                setTimeout(() => {
+                    anomalyAlert.classList.add("hidden");
+                }, 1000); // Show alert for 1 second
+            }
+        };
+
+        ws.onclose = function() {
+            console.log("WebSocket connection closed");
+            statusIndicator.textContent = "Disconnected";
+            statusIndicator.classList.remove("bg-green-500");
+            statusIndicator.classList.add("bg-red-500");
+        };
+
+        ws.onerror = function(error) {
+            console.error("WebSocket error:", error);
+            statusIndicator.textContent = "Error";
+            statusIndicator.classList.remove("bg-green-500");
+            statusIndicator.classList.add("bg-red-500");
+        };
+    });
+</script>
+{% endblock %}
