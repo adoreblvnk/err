@@ -7,19 +7,21 @@
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.min.js"></script>
   </head>
-  <body>
-    <nav class="bg-gray-800 text-white p-4">
-        <div class="container mx-auto flex justify-between">
-            <a href="/" class="font-bold">Supply Chain AI</a>
-            <div>
-                <a href="/" class="px-3 hover:text-gray-300">Home</a>
-                <a href="/camera" class="px-3 hover:text-gray-300">Camera Feed</a>
-                <a href="/industrial" class="px-3 hover:text-gray-300">Industrial</a>
+  <body class="bg-gray-900 text-white font-sans">
+    <nav class="backdrop-blur-lg bg-gray-800/50 sticky top-0 z-50 border-b border-gray-700">
+        <div class="container mx-auto flex justify-between items-center p-4 text-gray-300">
+            <a href="/" class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-300 to-blue-500">Supply Chain AI</a>
+            <div class="space-x-6">
+                <a href="/" class="hover:text-teal-300 transition-colors duration-300">Home</a>
+                <a href="/camera" class="hover:text-teal-300 transition-colors duration-300">Camera Feed</a>
+                <a href="/industrial" class="hover:text-teal-300 transition-colors duration-300">Industrial Predictor</a>
             </div>
         </div>
     </nav>
+    <main>
     {% block content %}
     {% endblock %}
+    </main>
     {% block scripts %}{% endblock %}
   </body>
 </html>
