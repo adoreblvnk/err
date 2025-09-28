@@ -15,7 +15,7 @@
             <!-- The actual camera feed image -->
             <img id="camera-feed" src="https://placehold.co/1280x720/000000/333333?text=Connecting+to+feed..." alt="Camera Feed" class="w-full h-auto rounded-lg">
             
-            <!-- Canvas for drawing bounding boxes -->
+            <!-- Canvas for drawing bounding boxes and labels -->
             <canvas id="bbox-canvas" class="absolute top-0 left-0 w-full h-full"></canvas>
 
             <!-- Status Indicator -->
@@ -27,6 +27,11 @@
             <!-- Anomaly Status -->
             <div id="anomaly-status" class="absolute top-4 right-4 font-semibold text-white bg-black/50 px-3 py-1 rounded-full transition-colors duration-300">
                 Status: Normal
+            </div>
+
+            <!-- Total Anomaly Count -->
+            <div id="anomaly-count" class="absolute bottom-4 right-4 font-semibold text-white bg-black/50 px-3 py-1 rounded-full transition-colors duration-300">
+                Total Anomalies: 0
             </div>
         </div>
     </div>
@@ -47,6 +52,7 @@ document.addEventListener("DOMContentLoaded", function() {
     const statusLight = document.getElementById("status-light");
     const statusText = document.getElementById("status-text");
     const anomalyStatus = document.getElementById("anomaly-status");
+    const anomalyCountElem = document.getElementById("anomaly-count");
     const canvas = document.getElementById("bbox-canvas");
     const ctx = canvas.getContext("2d");
 
@@ -75,20 +81,34 @@ document.addEventListener("DOMContentLoaded", function() {
         // Clear previous drawings
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+        // Update anomaly status
         if (data.anomaly && data.bboxes && data.bboxes.length > 0) {
             anomalyStatus.textContent = "Status: Anomaly Detected!";
             anomalyStatus.classList.add("bg-red-500");
-            
-            // Draw bounding boxes
+
+            // Draw bounding boxes and labels
             data.bboxes.forEach(bbox => {
-                const [x, y, w, h] = bbox;
+                const [x1, y1, x2, y2] = bbox;
+                const width = x2 - x1;
+                const height = y2 - y1;
+
+                // Rectangle
                 ctx.strokeStyle = "red";
-                ctx.lineWidth = 4;
-                ctx.strokeRect(x, y, w, h);
+                ctx.lineWidth = 2;
+                ctx.strokeRect(x1, y1, width, height);
             });
         } else {
             anomalyStatus.textContent = "Status: Normal";
             anomalyStatus.classList.remove("bg-red-500");
+        }
+
+        // Update total anomalies
+        if (data.total_anomalies !== undefined) {
+            anomalyCountElem.textContent = `Total Anomalies: ${data.total_anomalies}`;
+        } else if (data.count !== undefined) {
+            anomalyCountElem.textContent = `Total Anomalies: ${data.count}`;
+        } else {
+            anomalyCountElem.textContent = `Total Anomalies: 0`;
         }
     };
 
