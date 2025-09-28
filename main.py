@@ -2,6 +2,9 @@ from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
+from anomaly_detection.model import detect_triangle
+from camera_feed.camera_receiver import run_listener
+from industrial_predictor.predictor import train_model_and_get_predictions
 import uvicorn
 import asyncio
 import base64
@@ -9,9 +12,6 @@ from multiprocessing import Process, Queue
 import subprocess
 import sys
 import os
-
-from anomaly_detection.model import detect_triangle
-from camera_feed.camera_receiver import run_listener
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
@@ -43,6 +43,11 @@ def root(request: Request):
 def camera_page(request: Request):
     return templates.TemplateResponse("camera.html", {"request": request, "title": "Camera Feed Anomaly Detection"})
 
+@app.get("/industrial", response_class=HTMLResponse)
+def industrial_page(request: Request):
+    return templates.TemplateResponse("industrial.html", {"request": request, "title": "Industrial Anomaly Detection"})
+
+
 @app.websocket("/ws/camera_feed")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
@@ -70,6 +75,13 @@ async def websocket_endpoint(websocket: WebSocket):
             })
 
         await asyncio.sleep(1/60)  # ~60 FPS
+
+@app.get("/industrial-predictions")
+def industrial_predictions():
+    """
+    returns machine failure predictions
+    """
+    return train_model_and_get_predictions()
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
