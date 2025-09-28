@@ -7,6 +7,8 @@ import asyncio
 import base64
 from multiprocessing import Process, Queue
 import subprocess
+import sys
+import os
 
 from anomaly_detection.model import is_anomaly
 from camera_feed.camera_receiver import run_listener
@@ -23,8 +25,9 @@ async def startup_event():
     """
     Start the camera transmitter and receiver in background processes.
     """
-    # Start the transmitter
-    subprocess.Popen(["python3", "camera_feed/camera_transmitter.py", "--port", "7000", "--dest", "127.0.0.1"])
+    # Start the transmitter using the current python executable
+    transmitter_script_path = os.path.join("camera_feed", "camera_transmitter.py")
+    subprocess.Popen([sys.executable, transmitter_script_path, "--port", "7000", "--dest", "127.0.0.1"])
     
     # Start the receiver in a separate process
     receiver_process = Process(target=run_listener, args=(7000, "127.0.0.1", frame_queue))
