@@ -1,15 +1,16 @@
 import pandas as pd
+from pathlib import Path
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import classification_report, confusion_matrix
 import xgboost as xgb
-import numpy as np
 
 def train_model_and_get_predictions():
     """
     trains machine learning model & returns a full analysis
     """
     # Load dataset
-    df = pd.read_csv("data/ai4i2020.csv")
+    data_path = Path(__file__).parent.parent / "data" / "ai4i2020.csv"
+    df = pd.read_csv(data_path)
     df.columns = [col.replace("[","").replace("]","").replace(" ","_") for col in df.columns]
 
     # Define the specific sensor features to be used for training and analysis.
