@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="bg-gray-900 text-white min-h-screen font-sans">
+    <div class="container mx-auto px-4 py-12">
+
+        <!-- Header -->
+        <header class="text-center mb-16 animate-fade-in-down">
+            <h1 class="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-600">AI-Powered Fraud Detection</h1>
+            <p class="text-xl text-gray-400 mt-3">Identifying Fraudulent Transactions in Real-Time</p>
+        </header>
+
+        <!-- Section 1: The Data -->
+        <div class="mb-16 animate-fade-in-up" style="animation-delay: 0.2s;">
+            <h2 class="text-3xl font-bold mb-2 text-orange-400">1. The Data: What are we analyzing?</h2>
+            <p class="text-gray-400 mb-8">Our analysis is based on transactional data. Here's a look at the key metrics.</p>
+            <div id="summary-stats" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 text-center">
+                <!-- Summary Stat cards will be injected here -->
+            </div>
+        </div>
+
+        <!-- Section 2: Key Insights -->
+        <div class="mb-16 animate-fade-in-up" style="animation-delay: 0.4s;">
+            <h2 class="text-3xl font-bold mb-2 text-orange-400">2. Key Insights: What drives fraud?</h2>
+            <p class="text-gray-400 mb-8">Our AI model analyzed the data to identify the most critical factors leading to fraud. The results highlight a few key areas for monitoring.</p>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="bg-gray-800 rounded-xl shadow-2xl p-6">
+                    <h3 class="text-xl font-bold mb-4">Feature Importance</h3>
+                    <canvas id="featureImportanceChart" class="mb-4"></canvas>
+                    <h4 class="font-semibold text-lg text-red-400">Conclusion:</h4>
+                    <p id="feature-importance-conclusion" class="text-gray-400">No significant features identified.</p>
+                </div>
+                <div class="bg-gray-800 rounded-xl shadow-2xl p-6">
+                    <h3 class="text-xl font-bold mb-4">Correlation with Fraud</h3>
+                    <canvas id="correlationChart" class="mb-4"></canvas>
+                    <h4 class="font-semibold text-lg text-red-400">Conclusion:</h4>
+                    <p id="correlation-conclusion" class="text-gray-400">No strong correlations identified.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 2.5: Model Hyperparameters -->
+        <div class="mb-16 animate-fade-in-up" style="animation-delay: 0.5s;">
+            <h2 class="text-3xl font-bold mb-2 text-orange-400">2.5 Model Hyperparameters: What's under the hood?</h2>
+            <p class="text-gray-400 mb-8">The model's performance is optimized by tuning its hyperparameters. Here are the best settings found through automated experimentation.</p>
+            <div id="best-params" class="grid grid-cols-2 md:grid-cols-3 gap-6 text-center">
+                <!-- Best parameters will be injected here -->
+            </div>
+        </div>
+
+        <!-- Section 3: The Proof -->
+        <div class="animate-fade-in-up" style="animation-delay: 0.6s;">
+            <h2 class="text-3xl font-bold mb-2 text-orange-400">3. The Proof: How reliable is our model?</h2>
+            <p class="text-gray-400 mb-8">After training, we tested the model on unseen data to validate its performance. The results show a high degree of accuracy and reliability.</p>
+            <div class="bg-gray-800 rounded-xl shadow-2xl p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                        <h3 class="text-xl font-semibold mb-2">Confusion Matrix</h3>
+                        <p class="text-gray-500 mb-4 text-sm">This shows a direct comparison of the model's predictions versus reality.</p>
+                        <div id="confusion-matrix"></div>
+                        <p id="confusion-matrix-conclusion" class="text-gray-400 mt-4 text-sm">Awaiting data...</p>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold mb-2">Classification Report</h3>
+                        <p class="text-gray-500 mb-4 text-sm">This provides the key performance metrics for our model.</p>
+                        <div id="classification-report"></div>
+                        <p id="classification-report-conclusion" class="text-gray-400 mt-4 text-sm">Awaiting data...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    @keyframes fade-in-down { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fade-in-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-fade-in-down { animation: fade-in-down 0.8s ease-out forwards; }
+    .animate-fade-in-up { animation: fade-in-up 0.8s ease-out forwards; }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const generateColors = (num) => Array.from({length: num}, (_, i) => `hsla(${(i * 360 / num) % 360}, 70%, 60%, 0.7)`);
+
+    fetch('/fraud-predictions')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            // --- 1. Summary Statistics ---
+            const statsContainer = document.getElementById('summary-stats');
+            if (data.summary_stats && data.summary_stats.mean) {
+                const desired_keys = ['Transaction_Amount', 'Account_Balance', 'Daily_Transaction_Count', 'Avg_Transaction_Amount_7d', 'Risk_Score'];
+                desired_keys.forEach(key => {
+                    if (data.summary_stats.mean[key]) {
+                        statsContainer.innerHTML += `
+                            <div class="bg-gray-800 p-4 rounded-lg transform hover:scale-105 transition-transform duration-300">
+                                <div class="text-orange-400 font-bold text-lg">${key.replace(/_/g, ' ')}</div>
+                                <div class="text-3xl font-semibold">${data.summary_stats.mean[key].toFixed(2)}</div>
+                                <div class="text-sm text-gray-500">Average</div>
+                            </div>`;
+                    }
+                });
+            }
+
+            // --- 2a. Feature Importance ---
+            if (data.feature_importance && Object.keys(data.feature_importance).length > 0) {
+                const fiData = data.feature_importance;
+                const fiLabels = Object.keys(fiData);
+                new Chart(document.getElementById('featureImportanceChart').getContext('2d'), {
+                    type: 'bar', data: { labels: fiLabels, datasets: [{ data: Object.values(fiData), backgroundColor: generateColors(fiLabels.length) }] },
+                    options: { indexAxis: 'y', responsive: true, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#9CA3AF' } }, y: { ticks: { color: '#9CA3AF' } } } }
+                });
+                if (fiLabels.length > 1) {
+                    document.getElementById('feature-importance-conclusion').innerHTML = `The model identifies <strong class="text-red-400">${fiLabels[0].replace(/_/g, ' ')}</strong> and <strong class="text-red-400">${fiLabels[1].replace(/_/g, ' ')}</strong> as the most significant predictors of fraud. Monitoring these factors is critical for proactive detection.`;
+                }
+            }
+
+            // --- 2b. Correlation ---
+            if (data.correlation && Object.keys(data.correlation).length > 0) {
+                const corrData = { ...data.correlation };
+                delete corrData.Fraud_Label;
+                const corrLabels = Object.keys(corrData);
+                const corrValues = Object.values(corrData);
+                if (corrLabels.length > 0) {
+                    new Chart(document.getElementById('correlationChart').getContext('2d'), {
+                        type: 'bar', data: { labels: corrLabels, datasets: [{ data: corrValues, backgroundColor: corrValues.map(v => v > 0 ? 'hsla(0, 70%, 60%, 0.7)' : 'hsla(200, 70%, 60%, 0.7)') }] },
+                        options: { indexAxis: 'y', responsive: true, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#9CA3AF' } }, y: { ticks: { color: '#9CA3AF' } } } }
+                    });
+                    const sortedCorrelations = corrLabels.map((label, i) => ({ label, value: corrValues[i] })).sort((a, b) => Math.abs(b.value) - Math.abs(a.value));
+                    document.getElementById('correlation-conclusion').innerHTML = `We see a notable correlation between fraud and <strong class="text-red-400">${sortedCorrelations[0].label.replace(/_/g, ' ')}</strong>. As this metric changes, so does the risk of fraud, making it a key warning indicator.`;
+                }
+            }
+
+            // --- 3a. Confusion Matrix ---
+            if (data.confusion_matrix && data.confusion_matrix.length > 0) {
+                const cm = data.confusion_matrix;
+                document.getElementById('confusion-matrix').innerHTML = `
+                    <table class="w-full text-center text-sm">
+                        <thead><tr><th></th><th class="p-2">Predicted: Not Fraud</th><th class="p-2">Predicted: Fraud</th></tr></thead>
+                        <tbody>
+                            <tr><td class="font-bold p-2">Actual: Not Fraud</td><td class="bg-green-500 bg-opacity-20 p-3 rounded">${cm[0][0]}</td><td class="bg-red-500 bg-opacity-20 p-3 rounded">${cm[0][1]}</td></tr>
+                            <tr><td class="font-bold p-2">Actual: Fraud</td><td class="bg-red-500 bg-opacity-20 p-3 rounded">${cm[1][0]}</td><td class="bg-green-500 bg-opacity-20 p-3 rounded">${cm[1][1]}</td></tr>
+                        </tbody>
+                    </table>`;
+                const totalFailures = cm[1][0] + cm[1][1];
+                const percentCaught = totalFailures > 0 ? ((cm[1][1] / totalFailures) * 100).toFixed(0) : 0;
+                document.getElementById('confusion-matrix-conclusion').innerHTML = `
+                    <strong class="text-orange-400 text-base">A Major Leap from Reactive to Proactive.</strong><br>
+                    Before this model, 100% of fraud were surprises. The model now proactively catches <strong class="text-green-400">${percentCaught}%</strong> of all fraud, allowing for scheduled maintenance instead of costly shutdowns. The <strong class="text-red-400">${cm[1][0]}</strong> missed fraud represent our next target for improvement.`;
+            }
+
+            // --- 3b. Classification Report ---
+            if (data.classification_report && data.classification_report['1']) {
+                const cr = data.classification_report;
+                document.getElementById('classification-report').innerHTML = `
+                    <table class="w-full text-left text-sm">
+                        <thead><tr><th class="p-2">Class</th><th class="p-2">F1-Score</th><th class="p-2">Precision</th><th class="p-2">Recall</th></tr></thead>
+                        <tbody>
+                            <tr><td class="border-gray-700 border-t p-2 font-semibold">Not Fraud (0)</td><td class="border-gray-700 border-t p-2">${cr['0']['f1-score'].toFixed(2)}</td><td class="border-gray-700 border-t p-2">${cr['0']['precision'].toFixed(2)}</td><td class="border-gray-700 border-t p-2">${cr['0']['recall'].toFixed(2)}</td></tr>
+                            <tr><td class="border-gray-700 border-t p-2 font-semibold">Fraud (1)</td><td class="border-gray-700 border-t p-2">${cr['1']['f1-score'].toFixed(2)}</td><td class="border-gray-700 border-t p-2">${cr['1']['precision'].toFixed(2)}</td><td class="border-gray-700 border-t p-2">${cr['1']['recall'].toFixed(2)}</td></tr>
+                        </tbody>
+                    </table>`;
+                document.getElementById('classification-report-conclusion').innerHTML = `The model's <strong class="text-green-400">F1-Score for predicting fraud is ${cr['1']['f1-score'].toFixed(2)}</strong>, indicating a strong balance between precision (not raising false alarms) and recall (catching actual fraud). This high score confirms the model is reliable.`;
+            }
+        })
+        .catch(error => {
+            console.error("Failed to fetch or process fraud predictions:", error);
+            // Optionally update the UI to show an error state
+            document.getElementById('feature-importance-conclusion').textContent = "Error loading analysis.";
+            document.getElementById('correlation-conclusion').textContent = "Error loading analysis.";
+            document.getElementById('confusion-matrix-conclusion').textContent = "Error loading analysis.";
+            document.getElementById('classification-report-conclusion').textContent = "Error loading analysis.";
+        });
+});
+</script>
+{% endblock %}

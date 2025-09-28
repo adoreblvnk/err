@@ -8,16 +8,17 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.min.js"></script>
   </head>
   <body class="bg-gray-900 text-white font-sans">
-    <nav class="backdrop-blur-lg bg-gray-800/50 sticky top-0 z-50 border-b border-gray-700">
-        <div class="container mx-auto flex justify-between items-center p-4 text-gray-300">
-            <a href="/" class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-300 to-blue-500">Supply Chain AI</a>
-            <div class="space-x-6">
-                <a href="/" class="hover:text-teal-300 transition-colors duration-300">Home</a>
-                <a href="/camera" class="hover:text-teal-300 transition-colors duration-300">Camera Feed</a>
-                <a href="/industrial" class="hover:text-teal-300 transition-colors duration-300">Industrial Predictor</a>
-            </div>
+<nav class="bg-gray-800 p-4">
+    <div class="container mx-auto flex justify-between items-center">
+        <a href="/" class="text-white text-lg font-bold">Supply Chain AI</a>
+        <div>
+            <a href="/" class="text-gray-300 hover:text-white px-3">Home</a>
+            <a href="/camera" class="text-gray-300 hover:text-white px-3">Camera Feed</a>
+            <a href="/industrial" class="text-gray-300 hover:text-white px-3">Industrial Predictor</a>
+            <a href="/fraud" class="text-gray-300 hover:text-white px-3">Fraud Detection</a>
         </div>
-    </nav>
+    </div>
+</nav>
     <main>
     {% block content %}
     {% endblock %}

@@ -5,6 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from anomaly_detection.model import detect_triangle
 from camera_feed.camera_receiver import run_listener
 from industrial_predictor.predictor import train_model_and_get_predictions
+from fraud_detection.predictor import train_fraud_model_and_get_analysis
 import uvicorn
 import asyncio
 import base64
@@ -15,7 +16,6 @@ import os
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
-app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # A multiprocessing-safe queue to hold frames
 frame_queue = Queue(maxsize=10)
@@ -46,6 +46,10 @@ def camera_page(request: Request):
 @app.get("/industrial", response_class=HTMLResponse)
 def industrial_page(request: Request):
     return templates.TemplateResponse("industrial.html", {"request": request, "title": "Industrial Anomaly Detection"})
+
+@app.get("/fraud", response_class=HTMLResponse)
+def fraud_page(request: Request):
+    return templates.TemplateResponse("fraud.html", {"request": request, "title": "Fraud Detection Analysis"})
 
 
 @app.websocket("/ws/camera_feed")
@@ -82,6 +86,13 @@ def industrial_predictions():
     returns machine failure predictions
     """
     return train_model_and_get_predictions()
+
+@app.get("/fraud-predictions")
+def fraud_predictions():
+    """
+    returns fraud detection analysis
+    """
+    return train_fraud_model_and_get_analysis()
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
