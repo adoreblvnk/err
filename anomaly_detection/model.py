@@ -95,7 +95,7 @@ def detect_triangle(frame_bytes, distance_threshold=30, max_seconds_lost=1.0, ed
         cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 2)
         # Draw label above box
         cv2.putText(frame, "Triangle", (x1, max(0, y1-10)),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 2)
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.3, (0, 100, 0), 1)
 
         bboxes.append((x1, y1, x2, y2))
         detected = True
